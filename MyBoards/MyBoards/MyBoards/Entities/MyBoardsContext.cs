@@ -28,6 +28,32 @@ namespace MyBoards.Entities
                 eb.Property(x => x.Activity).HasMaxLength(200);
                 eb.Property(x => x.RemaningWork).HasPrecision(14, 2);
                 eb.Property(x => x.Priority).HasDefaultValue(1);
+                eb.HasMany(x => x.Comments)
+                .WithOne(x => x.WorkItem)
+                .HasForeignKey(x => x.WorkItemId);
+                eb.HasOne(x => x.Author)
+                .WithMany(x => x.WorkItems)
+                .HasForeignKey(x => x.AuthorId);
+
+                eb.HasMany(x => x.Tags)
+                .WithMany(x => x.WorkItems)
+                .UsingEntity<WorkItemTag>(
+                    w => w.HasOne(wit => wit.Tag)
+                    .WithMany()
+                    .HasForeignKey(wit => wit.TagId),
+                    w => w.HasOne(wit => wit.WorkItem)
+                    .WithMany()
+                    .HasForeignKey(wit => wit.WorkItemId),
+                    
+                    wit =>
+                    {
+                        wit.HasKey(x => new {x.TagId, x.WorkItemId});
+                        wit.Property(x => x.PublicationDate)
+                        .HasDefaultValueSql("getutcdate()");
+                    }
+
+                    );
+
 
             });
 
@@ -36,6 +62,14 @@ namespace MyBoards.Entities
                 eb.Property(x => x.CreatedDate).HasDefaultValueSql("getutcdate()");
                 eb.Property(x => x.UpdatedDate).ValueGeneratedOnUpdate();
             });
+
+            modelBuilder.Entity<User>(eb =>
+            {
+                eb.HasOne(u => u.Address)
+                .WithOne(u => u.User)
+                .HasForeignKey<Address>(a => a.UserId);
+            });
+
         }
 
 
